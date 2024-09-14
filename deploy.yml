@@ -1,0 +1,33 @@
+- name: Deploy NGINX Ingress Controller
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Add NGINX Helm repository
+      shell: helm repo add nginx-stable https://charts.nginx.org/stable
+    - name: Install NGINX Ingress Controller
+      shell: helm install nginx-ingress nginx-stable/nginx-ingress
+
+- name: Deploy Hello World Application
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Create Kubernetes service
+      shell: kubectl create service NodePort hello-world --image=hello-world --port=80:80
+    - name: Apply Ingress resource
+      shell: kubectl apply -f ingress. yaml
+
+- name: Generate self-signed certificate
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Generate certificate
+      shell: openssl req -x509 -newkey rsa:2048 -keyout tls.key -out tls.crt -days 365 -nodes
+
+- name: Apply TLS certificate
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Create TLS secret
+      shell: kubectl create secret tls tls-secret --key tls.key --cert tls.crt
+    - name: Update Ingress with TLS
+      shell: kubectl patch ingress hello-world-ingress -p '{"spec":{"tls":[{"secretName":"tls-secret"}]}}'
